@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Employee QR Scanner</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f5f9;
+      padding: 16px;
+      margin: 0;
+    }
+    .card {
+      max-width: 450px;
+      margin: 20px auto;
+      padding: 22px;
+      background: white;
+      border-radius: 14px;
+      text-align: center;
+      box-shadow: 0 4px 15px #0001;
+    }
+    input, button {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    input { border: 1px solid #ccc; }
+    button {
+      border: 0;
+      background: #6040a0;
+      color: white;
+      cursor: pointer;
+    }
+    #result {
+      display: none;
+      background: #f0f7ff;
+      padding: 15px;
+      margin-top: 16px;
+      border-radius: 10px;
+      overflow-wrap: anywhere;
+    }
+    .count {
+      font-size: 52px;
+      font-weight: bold;
+      color: #6040a0;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Employee QR Scanner</h2>
+
+    <input id="pin" type="password"
+           placeholder="Security scanner PIN"
+           autocomplete="current-password">
+
+    <button id="start" onclick="startScanner()">
+      Start Scanner
+    </button>
+
+    <div id="reader"></div>
+    <div id="result" role="status" aria-live="polite"></div>
+
+    <button id="next" onclick="startScanner()" hidden>
+      Scan Next Employee
+    </button>
+  </div>
+
+  <script>
+    let scanner;
+    let busy = false;
+
+    const result = document.getElementById("result");
+    const startButton = document.getElementById("start");
+    const nextButton = document.getElementById("next");
+
+    function message(text) {
+      result.style.display = "block";
+      result.textContent = text;
+    }
+
+    async function startScanner() {
+      if (busy) return;
+
+      result.style.display = "none";
+      nextButton.hidden = true;
+
+      if (!document.getElementById("pin").value.trim()) {
+        message("Enter the security scanner PIN.");
+        return;
+      }
+
+      startButton.disabled = true;
+
+      try {
+        if (!scanner) {
+          scanner = new Html5Qrcode("reader");
+        }
+
+        await scanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          async decodedText => {
+            if (busy) return;
+            busy = true;
+
+            try {
+              await scanner.stop();
+
+              message("QR detected. Saving scan...");
+
+              const response = await fetch("/api/scan", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                  qrData: decodedText,
+                  pin: document.getElementById("pin").value
+                })
+              });
+
+              const data = await response.json();
+
+              if (!response.ok) {
+                throw new Error(data.message || "Request failed");
+              }
+
+              result.replaceChildren();
+              result.style.display = "block";
+
+              if (!data.success) {
+                message(data.message || "Employee scan failed.");
+              } else {
+                const add = (tag, text, className) => {
+                  const el = document.createElement(tag);
+                  el.textContent = text;
+                  if (className) el.className = className;
+                  result.appendChild(el);
+                };
+
+                add("h3", "Scan Successful");
+                add("p", data.name + " (" + data.employeeId + ")");
+                add("p", data.department || "");
+                add("div", String(data.count), "count");
+                add("p", "Total Scans");
+              }
+
+            } catch (error) {
+              message("Scan error: " + error.message);
+            } finally {
+              busy = false;
+              nextButton.hidden = false;
+            }
+          }
+        );
+
+        startButton.hidden = true;
+        message("Camera started. Point it at the employee pass.");
+
+      } catch (error) {
+        message("Camera error: " + error.message);
+        startButton.hidden = false;
+      } finally {
+        startButton.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
