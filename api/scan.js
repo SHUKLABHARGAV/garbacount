@@ -42,24 +42,29 @@ export default async function handler(req, res) {
       redirect: "follow"
     });
 
-    const text = await upstream.text();
+ 
+const text = await upstream.text();
 
-    let data;
+let data;
 
-    try {
-      data = JSON.parse(text);
-    } catch {
-      console.error(
-        "Apps Script returned a non-JSON response:",
-        text.slice(0, 300)
-      );
+try {
+  data = JSON.parse(text);
+} catch (error) {
+  console.error("Apps Script HTTP status:", upstream.status);
+  console.error("Apps Script final URL:", upstream.url);
+  console.error("Apps Script response:", text.slice(0, 1000));
 
-      return res.status(502).json({
-        success: false,
-        message:
-          "Apps Script did not return JSON. Check deployment permissions."
-      });
-    }
+  return res.status(502).json({
+    success: false,
+    message: "Apps Script returned HTML or invalid JSON.",
+    httpStatus: upstream.status,
+    finalUrl: upstream.url,
+    responsePreview: text.slice(0, 500)
+  });
+}
+
+return res.status(200).json(data);
+
 
     return res.status(200).json(data);
 
