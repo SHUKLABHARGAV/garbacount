@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     });
   }
 
-  const secret = process.env.SCANNER_API_SECRET;
+  const secret = "https://script.google.com/a/macros/sswhite.net/s/AKfycbxp8X_-dHhMP-EVc7--W56k0z2U5229XqB4cvUpXZSU/dev?pli=1&authuser=0";
 
   if (
     !secret ||
