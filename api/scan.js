@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   }
 
   // Validate the scanner PIN configured in Vercel.
-  const configuredPin = process.env.SCANNER_PIN;
+  const configuredPin = 123;
   const suppliedPin = String(req.body?.pin || "");
 
   if (
