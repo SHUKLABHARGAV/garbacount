@@ -7,15 +7,17 @@ export default async function handler(req, res) {
     });
   }
 
-  const secret = "https://script.google.com/a/macros/sswhite.net/s/AKfycbxp8X_-dHhMP-EVc7--W56k0z2U5229XqB4cvUpXZSU/dev?pli=1&authuser=0";
+  // Validate the scanner PIN configured in Vercel.
+  const configuredPin = process.env.SCANNER_PIN;
+  const suppliedPin = String(req.body?.pin || "");
 
   if (
-    !secret ||
-    req.headers["x-scanner-secret"] !== secret
+    !configuredPin ||
+    suppliedPin !== configuredPin
   ) {
     return res.status(401).json({
       success: false,
-      message: "Unauthorized"
+      message: "Invalid scanner PIN"
     });
   }
 
@@ -43,12 +45,20 @@ export default async function handler(req, res) {
     const text = await upstream.text();
 
     let data;
+
     try {
       data = JSON.parse(text);
     } catch {
-      throw new Error(
-        "Apps Script did not return JSON. Check web app access permissions."
+      console.error(
+        "Apps Script returned a non-JSON response:",
+        text.slice(0, 300)
       );
+
+      return res.status(502).json({
+        success: false,
+        message:
+          "Apps Script did not return JSON. Check deployment permissions."
+      });
     }
 
     return res.status(200).json(data);
