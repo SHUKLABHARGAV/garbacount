@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     });
   }
 
-  const scriptUrl = process.env.APPS_SCRIPT_URL;
+  const scriptUrl = "https://script.google.com/macros/s/AKfycbwEC6dPm8khJerjlDN-mOkl6OnHzvDoD3gMGfG8mGig8mnIFDcVRcOKyve0AP3sz-A_Yg/exec";
 
   if (!scriptUrl) {
     return res.status(500).json({
