@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     });
   }
 
-  const scriptUrl = "https://script.google.com/macros/s/AKfycbwEC6dPm8khJerjlDN-mOkl6OnHzvDoD3gMGfG8mGig8mnIFDcVRcOKyve0AP3sz-A_Yg/exec";
+  const scriptUrl = "https://script.google.com/macros/s/AKfycbzdQ-nma4D8sLkyPFODSn07Woiz5JVPFvTYR6Y73ZflTOOxrfV93jGPG8-pWAoGauVk8w/exec";
 
   if (!scriptUrl) {
     return res.status(500).json({
